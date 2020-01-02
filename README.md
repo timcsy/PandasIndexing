@@ -8,7 +8,7 @@
 # install dependencies
 $ npm run install
 
-# serve with hot reload at localhost:3000
+# serve with hot reload at localhost:49813
 $ npm run dev
 
 # build for production and launch server
@@ -25,3 +25,11 @@ For detailed explanation on how things work, check out [Nuxt.js docs](https://nu
 Using packages
 ---
 koa-router koa-websocket random-words
+
+Notice
+---
+Add a file plugin/config.js
+```
+export default { websocketType: 'wss' }
+
+```
