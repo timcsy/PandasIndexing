@@ -20,6 +20,9 @@
 					<v-spacer />
 					<h1> 目前人數： {{ students.length }} 人 </h1>
 					<v-spacer />
+					<v-btn @click="initial()" class="mx-1">
+						預設值
+					</v-btn>
 					<v-btn @click="start('example')" class="mx-1">
 						試玩
 					</v-btn>
@@ -27,36 +30,121 @@
 						實戰
 					</v-btn>
 				</v-row>
-				<v-row class="mb-8 mx-1">
-					<h2> 大小 </h2>
-				</v-row>
-				<v-row class="mt-8">
-					<v-text-field
-						v-model="shape.row[0]"
-						label="min row"
-						outlined
-						class="mx-4"
-					/>
-					<v-text-field
-						v-model="shape.col[0]"
-						label="min column"
-						outlined
-						class="mx-4"
-					/>
-				</v-row>
+
 				<v-row>
-					<v-text-field
-						v-model="shape.row[1]"
-						label="Max row"
+					<v-col class="px-4">
+						<v-subheader>Row 的範圍</v-subheader>
+						<v-range-slider
+							v-model="shape.row"
+							max="25"
+							min="0"
+							hide-details
+							thumb-label="always"
+							class="align-center my-8"
+						>
+							<template v-slot:prepend>
+								<v-text-field
+									v-model="shape.row[0]"
+									class="mt-0 pt-0"
+									hide-details
+									single-line
+									type="number"
+									style="width: 60px"
+								/>
+							</template>
+							<template v-slot:append>
+								<v-text-field
+									v-model="shape.row[1]"
+									class="mt-0 pt-0"
+									hide-details
+									single-line
+									type="number"
+									style="width: 60px"
+								/>
+							</template>
+						</v-range-slider>
+					</v-col>
+
+					<v-col class="px-4">
+						<v-subheader>Column 的範圍</v-subheader>
+						<v-range-slider
+							v-model="shape.col"
+							max="20"
+							min="0"
+							hide-details
+							thumb-label="always"
+							class="align-center my-8"
+						>
+							<template v-slot:prepend>
+								<v-text-field
+									v-model="shape.col[0]"
+									class="mt-0 pt-0"
+									hide-details
+									single-line
+									type="number"
+									style="width: 60px"
+								/>
+							</template>
+							<template v-slot:append>
+								<v-text-field
+									v-model="shape.col[1]"
+									class="mt-0 pt-0"
+									hide-details
+									single-line
+									type="number"
+									style="width: 60px"
+								/>
+							</template>
+						</v-range-slider>
+					</v-col>
+				</v-row>
+
+				<v-row class="mx-1">
+					<v-subheader class="pb-8 mb-8">
+						秒數
+					</v-subheader>
+					<v-slider
+						v-model="time"
+						thumb-label="always"
+						class="my-2"
+					>
+						<template v-slot:append>
+              <v-text-field
+                v-model="time"
+                class="mt-0 pt-0"
+                hide-details
+                single-line
+                type="number"
+                style="width: 60px"
+              />
+						</template>
+					</v-slider>
+				</v-row>
+
+				<v-row class="mx-1">
+					<v-select
+						:items="typeItem"
+						v-model="type"
+						label="題目類型"
 						outlined
 						class="mx-4"
 					/>
-					<v-text-field
-						v-model="shape.col[1]"
-						label="Max column"
+					<v-select
+						:items="indexTypeItem"
+						v-model="indexType.row"
+						label="Row類型"
 						outlined
 						class="mx-4"
 					/>
+					<v-select
+						:items="indexTypeItem"
+						v-model="indexType.col"
+						label="Column類型"
+						outlined
+						class="mx-4"
+					/>
+					<v-switch v-model="slice" label="使用 Slice 切片 ( : )" class="mx-4" />
+					<v-switch v-model="simple" label="簡化單項" class="mx-4" />
 				</v-row>
 			</v-col>
 			<v-col v-else-if="view === 'question'">
@@ -68,11 +156,57 @@
 				<v-row justify="center" class="my-4">
 					<h2> {{ question.text }} </h2>
 				</v-row>
-				<data-frame
-					:data="question.data"
-				/>
+				<data-frame :data="question.data" />
 			</v-col>
-			<v-col v-else-if="view === 'result'">
+			<v-col v-else-if="view === 'result' && stage === 'answer'">
+				<v-row class="ma-2">
+					<h1>解答</h1>
+					<v-spacer />
+					<v-btn
+						@click="viewReal()"
+						class="mx-1"
+					>
+						看結果
+					</v-btn>
+				</v-row>
+				<v-row justify="center" class="mb-4">
+					<h2> {{ answerData.text }} </h2>
+				</v-row>
+				<data-frame :data="answerData.data" />
+			</v-col>
+			<v-col v-else-if="view === 'result' && stage === 'real'">
+				<v-row class="ma-2">
+					<h2>作答情形（</h2>
+					<h2 class="light-green">
+						綠：肯定答對/欄位名
+					</h2>
+					<h2>，</h2>
+					<h2 class="grey">
+						灰：否定答對
+					</h2>
+					<h2>，</h2>
+					<h2 class="amber">
+						黃：肯定答錯
+					</h2>
+					<h2>，</h2>
+					<h2 class="red">
+						紅：否定答錯
+					</h2>
+					<h2>）</h2>
+					<v-spacer />
+					<v-btn
+						@click="viewRank()"
+						class="mx-1"
+					>
+						看排名
+					</v-btn>
+				</v-row>
+				<v-row justify="center" class="mb-4">
+					<h2> {{ realData.text }} </h2>
+				</v-row>
+				<data-frame :data="realData.data" />
+			</v-col>
+			<v-col v-else-if="view === 'result' && stage === 'rank'">
 				<v-row class="ma-2">
 					<h1>排名</h1>
 					<v-spacer />
@@ -116,16 +250,37 @@ export default {
 	data () {
 		return {
 			view: 'start',
+			stage: 'answer',
 			students: [],
 			shape: {
 				row: [3, 8],
 				col: [3, 6]
 			},
 			type: 'index',
+			typeItem: [
+				{ value: 'index', text: '單項索引' },
+				{ value: 'same', text: '同行同列' },
+				{ value: 'location', text: '範圍選取' },
+				{ value: 'condition', text: '條件選取' },
+				{ value: 'function', text: '作用函式' }
+			],
 			indexType: { row: 'contiInt', col: 'contiChar' },
+			indexTypeItem: [
+				{ value: 'contiInt', text: '連續整數' },
+				{ value: 'randInt', text: '隨機整數' },
+				{ value: 'contiChar', text: '連續字元' },
+				{ value: 'randChar', text: '隨機字元' },
+				{ value: 'name', text: '英文單字' },
+				{ value: 'day', text: '日期' },
+				{ value: 'hour', text: '日期小時' }
+			],
+			slice: false,
+			simple: false,
 			question: { text: '', data: { headers: [], table: [] } },
 			answers: 0,
 			time: 20,
+			answerData: { text: '', data: { headers: [], table: [] } },
+			realData: { text: '', data: { headers: [], table: [] } },
 			rank: []
 		}
 	},
@@ -161,6 +316,15 @@ export default {
 			this.view = 'setting'
 			this.time = this.lastTime || 20
 		},
+		initial () {
+			this.time = 20
+			this.$set(this, 'shape', {
+				row: [3, 8],
+				col: [3, 6]
+			})
+			this.type = 'index'
+			this.indexType = { row: 'contiInt', col: 'contiChar' }
+		},
 		start (type) {
 			this.lastTime = this.time
 			this.view = 'question'
@@ -169,6 +333,8 @@ export default {
 				shape: this.shape,
 				type: this.type,
 				indexType: this.indexType,
+				slice: this.slice,
+				simple: this.simple,
 				time: this.time
 			})
 		},
@@ -178,7 +344,16 @@ export default {
 		},
 		result (msg) {
 			this.view = 'result'
+			this.stage = 'answer'
+			this.$set(this, 'answerData', msg.answerData)
+			this.$set(this, 'realData', msg.realData)
 			this.$set(this, 'rank', msg.rank.slice(0, 5))
+		},
+		viewReal () {
+			this.stage = 'real'
+		},
+		viewRank () {
+			this.stage = 'rank'
 		},
 		finish () {
 			this.send({ cmd: 'teacher:finish' })

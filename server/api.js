@@ -1,7 +1,7 @@
 /* eslint-disable require-await */
 const Router = require('koa-router')
 const consola = require('consola')
-const { question, getAnswer, questionData } = require('./question')
+const { question, getAnswer, questionData, answerData, realData } = require('./question')
 
 const router = new Router()
 
@@ -14,7 +14,7 @@ let isExample
 let questionCount = 0
 let currentQuestion
 let rightAnswer // to store the right anser of current question
-const realAnswer = {} // to store the real anser of current question
+const realAnswer = {} // to store the real answer of current question
 const questions = [] // to store the questions
 let answers // to store the number of answered
 let totalTime
@@ -37,9 +37,11 @@ function askQuestion (msg) {
 	const shape = msg.shape
 	const type = msg.type
 	const indexType = msg.indexType
+	const slice = msg.slice
+	const simple = msg.simple
 	answers = 0
 	totalTime = time = msg.time
-	currentQuestion = question(++questionCount, shape, names, type, indexType)
+	currentQuestion = question(++questionCount, shape, names, type, indexType, slice, simple)
 	rightAnswer = getAnswer(currentQuestion)
 	sendTeacher({ cmd: 'teacher:question', question: questionData(currentQuestion) })
 	Object.keys(names).forEach(id => sendStudent(id, { cmd: 'student:question' }))
@@ -62,7 +64,12 @@ function result () {
 	}
 	questions.push({ question: currentQuestion, rightness })
 	const rank = Object.entries(scores).sort((a, b) => b[1] - a[1])
-	sendTeacher({ cmd: 'teacher:result', rank: rank.map(r => [names[r[0]], r[1]]) })
+	sendTeacher({
+		cmd: 'teacher:result',
+		answerData: answerData(currentQuestion),
+		realData: realData(currentQuestion, rightAnswer, realAnswer, names),
+		rank: rank.map(r => [names[r[0]], r[1]])
+	})
 	Object.keys(names).forEach(id => (
 		sendStudent(id, {
 			cmd: 'student:result',

@@ -87,18 +87,21 @@ function generateIndex (type, num) {
 
 function printIndex (index, type) {
 	if (type === 'contiInt' || type === 'randInt') {
-		return index.map(i => i.toString())
+		return index.map(i => i[0].toString())
 	} else if (type === 'hour') {
-		return index.map(i => "'" + i.split(':')[0] + "'")
+		return index.map(i => "'" + i[0].split(':')[0] + "'")
 	} else {
-		return index.map(i => "'" + i + "'")
+		return index.map(i => "'" + i[0] + "'")
 	}
 }
 
-function question (count, shape, names, type, indexType) {
+function question (count, shape, names, type, indexType, slice, simple) {
 	let text
 	const { size: { row, col }, table } = generateTable(shape, names)
-	const index = { row: generateIndex(indexType.row, row), col: generateIndex(indexType.col, col) }
+	const index = {
+		row: generateIndex(indexType.row, row).map(r => [r, false]),
+		col: generateIndex(indexType.col, col).map(c => [c, false])
+	}
 	const indexRow = printIndex(index.row, indexType.row)
 	const indexCol = printIndex(index.col, indexType.col)
 	if (type === 'index') {
@@ -110,6 +113,8 @@ function question (count, shape, names, type, indexType) {
 			}
 		}
 		text = '第' + count + '題：' + 'df.loc[' + indexRow[r] + ', ' + indexCol[c] + ']'
+		index.row[r][1] = true
+		index.col[c][1] = true
 	} else if (type === 'same') {
 		const r = random(0, row - 1)
 		const c = random(0, col - 1)
@@ -119,6 +124,8 @@ function question (count, shape, names, type, indexType) {
 			}
 		}
 		text = '第' + count + '題：' + 'df.loc[' + indexRow[r] + ', ' + indexCol[c] + '] 相同行列'
+		index.row[r][1] = true
+		index.col[c][1] = true
 	} else if (type === 'location') {
 		//
 	} else if (type === 'condition') {
@@ -136,14 +143,49 @@ function getAnswer (question) {
 }
 
 function questionData (question) {
-	const headers = question.index.col.map((c, i) => ({ text: c, value: i.toString() }))
-	headers.unshift({ text: '', value: 'row' })
-	const table = question.index.row.map((r, i) => {
-		const row = { row: r }
-		for (let j = 0; j < question.table[i].length; j++) { row[j.toString()] = question.table[i][j][1] }
-		return row
-	})
+	const headers = question.index.col.map((c, i) => ({ text: c[0], key: i }))
+	const table = question.index.row.map((r, i) => (
+		{ key: i, row: { text: r[0] }, items: question.table[i].map((c, j) => ({ key: j, text: c[1] })) }
+	))
 	return { text: question.text, data: { headers, table } }
 }
 
-module.exports = { question, getAnswer, questionData }
+function color (ans, right, isName = false) {
+	if (ans && right) {
+		return 'light-green'
+	} else if (ans && !right) {
+		return 'amber'
+	} else if (!ans && !right && isName) { // not ans but ans
+		return 'red'
+	} else if (!ans && right && isName) {
+		return 'grey'
+	} else {
+		return ''
+	}
+}
+
+function answerData (question) {
+	const headers = question.index.col.map((c, i) => ({ text: c[0], key: i, color: color(c[1], true) }))
+	const table = question.index.row.map((r, i) => ({ key: i,
+		row: { text: r[0], color: color(r[1], true) },
+		items: question.table[i].map((c, j) => ({ key: j, text: c[1], color: color(c[2], true) }))
+	}))
+	return { text: question.text, data: { headers, table } }
+}
+
+function realData (question, rightAnswer, realAnswer, names) {
+	const isRight = Object.keys(rightAnswer)
+												.filter(id => (id in realAnswer) ? rightAnswer[id] === realAnswer[id] : true)
+	const headers = question.index.col.map((c, i) => ({ text: c[0], key: i, color: color(c[1], true) }))
+	const table = question.index.row.map((r, i) => ({ key: i,
+		row: { text: r[0], color: color(r[1], true) },
+		items: question.table[i].map((c, j) => ({
+			key: j,
+			text: c[1],
+			color: color(c[2], isRight.includes(c[0]), Object.keys(names).includes(c[0]))
+		}))
+	}))
+	return { text: question.text, data: { headers, table } }
+}
+
+module.exports = { question, getAnswer, questionData, answerData, realData }
