@@ -7,19 +7,19 @@ const router = new Router()
 
 let studentCount = 0
 let teacherSocket
-const sockets = {} // to store the incoming socket
-const scores = {} // to store the student scores
-const names = {} // to store the student names
+let sockets = {} // to store the incoming socket
+let scores = {} // to store the student scores
+let names = {} // to store the student names
 let isExample
 let questionCount = 0
 let currentQuestion
 let rightAnswer // to store the right anser of current question
-const realAnswer = {} // to store the real answer of current question
-const questions = [] // to store the questions
+let realAnswer = {} // to store the real answer of current question
+let questions = [] // to store the questions
 let answers // to store the number of answered
 let totalTime
 let time // to store the  left time
-const times = {} // to store the left times
+let times = {} // to store the left times
 let timer
 
 function sendTeacher (msg) {
@@ -37,11 +37,13 @@ function askQuestion (msg) {
 	const shape = msg.shape
 	const type = msg.type
 	const indexType = msg.indexType
+	const same = msg.same
 	const slice = msg.slice
 	const simple = msg.simple
 	answers = 0
 	totalTime = time = msg.time
-	currentQuestion = question(++questionCount, shape, names, type, indexType, slice, simple)
+	currentQuestion = question(++questionCount, shape, names, type, indexType, same, slice, simple)
+	realAnswer = {}
 	rightAnswer = getAnswer(currentQuestion)
 	sendTeacher({ cmd: 'teacher:question', question: questionData(currentQuestion) })
 	Object.keys(names).forEach(id => sendStudent(id, { cmd: 'student:question' }))
@@ -55,8 +57,7 @@ function askQuestion (msg) {
 function result () {
 	clearInterval(timer)
 	const rightness = {}
-	Object.keys(names).forEach(id => (rightness[id] = realAnswer[id] === rightAnswer[id]))
-	//
+	Object.keys(names).forEach(id => (rightness[id] = (realAnswer[id] !== undefined) && (realAnswer[id] === rightAnswer[id])))
 	if (!isExample) {
 		Object.keys(names).forEach(id => (
 			scores[id] += rightness[id] ? Math.ceil(60 + 40 * times[id] / totalTime) : 0
@@ -123,6 +124,22 @@ router.all('/', async (ctx) => {
 					wrong: questions.filter(q => !(q.rightness[id])).map(q => q.question.text)
 				})
 			))
+			studentCount = 0
+			teacherSocket = undefined
+			sockets = {} // to store the incoming socket
+			scores = {} // to store the student scores
+			names = {} // to store the student names
+			isExample = undefined
+			questionCount = 0
+			currentQuestion = undefined
+			rightAnswer = undefined // to store the right anser of current question
+			realAnswer = {} // to store the real answer of current question
+			questions = [] // to store the questions
+			answers = undefined // to store the number of answered
+			totalTime = undefined
+			time = undefined // to store the  left time
+			times = {} // to store the left times
+			timer = undefined
 		}
 	})
 })

@@ -100,13 +100,14 @@
 				</v-row>
 
 				<v-row class="mx-1">
-					<v-subheader class="pb-8 mb-8">
+					<v-subheader class="pb-8 mb-4">
 						秒數
 					</v-subheader>
 					<v-slider
 						v-model="time"
 						thumb-label="always"
 						class="my-2"
+						min="1"
 					>
 						<template v-slot:append>
               <v-text-field
@@ -121,6 +122,11 @@
 					</v-slider>
 				</v-row>
 
+				<v-row class="mx-1 mb-8">
+					<v-switch v-model="same" label="行列使用相同索引" class="mx-4" />
+					<v-switch v-model="slice" label="使用 Slice 切片 ( : )" class="mx-4" />
+					<v-switch v-model="simple" label="簡化單項" class="mx-4" />
+				</v-row>
 				<v-row class="mx-1">
 					<v-select
 						:items="typeItem"
@@ -131,20 +137,18 @@
 					/>
 					<v-select
 						:items="indexTypeItem"
-						v-model="indexType.row"
+						v-model="indexTypeRow"
 						label="Row類型"
 						outlined
 						class="mx-4"
 					/>
 					<v-select
 						:items="indexTypeItem"
-						v-model="indexType.col"
+						v-model="indexTypeCol"
 						label="Column類型"
 						outlined
 						class="mx-4"
 					/>
-					<v-switch v-model="slice" label="使用 Slice 切片 ( : )" class="mx-4" />
-					<v-switch v-model="simple" label="簡化單項" class="mx-4" />
 				</v-row>
 			</v-col>
 			<v-col v-else-if="view === 'question'">
@@ -183,6 +187,14 @@
 					<h2>，</h2>
 					<h2 class="grey">
 						灰：否定答對
+					</h2>
+					<h2>，</h2>
+					<h2 class="light-blue">
+						藍：肯定未答
+					</h2>
+					<h2>，</h2>
+					<h2 class="purple lighten-3">
+						紫：否定未答
 					</h2>
 					<h2>，</h2>
 					<h2 class="amber">
@@ -227,7 +239,13 @@
 			</v-col>
 			<v-col v-else-if="view === 'finish'">
 				<v-row justify="center" class="ma-2">
-					<h1>總成績，恭喜！！！</h1>
+					<h1>總成績</h1>
+					<v-spacer />
+					<h1>恭喜！！！</h1>
+					<v-spacer />
+					<v-btn @click="goHome()">
+						回首頁
+					</v-btn>
 				</v-row>
 				<rank-table :rank="rank" />
 			</v-col>
@@ -260,11 +278,10 @@ export default {
 			typeItem: [
 				{ value: 'index', text: '單項索引' },
 				{ value: 'same', text: '同行同列' },
-				{ value: 'location', text: '範圍選取' },
-				{ value: 'condition', text: '條件選取' },
-				{ value: 'function', text: '作用函式' }
+				{ value: 'location', text: '範圍選取' }
 			],
-			indexType: { row: 'contiInt', col: 'contiChar' },
+			indexTypeRow: 'contiInt',
+			indexTypeCol: 'contiChar',
 			indexTypeItem: [
 				{ value: 'contiInt', text: '連續整數' },
 				{ value: 'randInt', text: '隨機整數' },
@@ -274,6 +291,7 @@ export default {
 				{ value: 'day', text: '日期' },
 				{ value: 'hour', text: '日期小時' }
 			],
+			same: false,
 			slice: false,
 			simple: false,
 			question: { text: '', data: { headers: [], table: [] } },
@@ -284,6 +302,23 @@ export default {
 			rank: []
 		}
 	},
+	watch: {
+    indexTypeRow () {
+			if (this.same) {
+				this.indexTypeCol = this.indexTypeRow
+			}
+		},
+		indexTypeCol () {
+			if (this.same) {
+				this.indexTypeRow = this.indexTypeCol
+			}
+		},
+		same () {
+			if (this.same) {
+				this.indexTypeCol = this.indexTypeRow
+			}
+		}
+  },
 	mounted () {
 		this.ws = new WebSocket(config.websocketType + '://' + location.host + '/')
 		this.ws.onmessage = (e) => {
@@ -332,7 +367,8 @@ export default {
 				cmd: 'teacher:' + type,
 				shape: this.shape,
 				type: this.type,
-				indexType: this.indexType,
+				indexType: { row: this.indexTypeRow, col: this.indexTypeCol },
+				same: this.same,
 				slice: this.slice,
 				simple: this.simple,
 				time: this.time
@@ -361,6 +397,10 @@ export default {
 		total (msg) {
 			this.view = 'finish'
 			this.$set(this, 'rank', msg.rank)
+		},
+		goHome () {
+			this.view = 'start'
+			this.send({ cmd: 'teacher:new' })
 		}
 	}
 }
