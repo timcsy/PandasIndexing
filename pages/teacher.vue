@@ -105,9 +105,9 @@
 					</v-subheader>
 					<v-slider
 						v-model="time"
+						:min="1"
 						thumb-label="always"
 						class="my-2"
-						min="1"
 					>
 						<template v-slot:append>
               <v-text-field
