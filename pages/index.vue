@@ -4,7 +4,15 @@
       justify="center"
       align="center"
     >
-        <p>輸入暱稱然後進入遊戲</p>
+        <p>請輸入遊戲編號和暱稱，然後進入遊戲</p>
+        <v-text-field
+          v-model="room"
+          label="請輸入遊戲編號"
+          placeholder="（例：123，請看老師的頁面）"
+          outlined
+          solo
+          counter="8"
+        />
         <v-text-field
           v-model="name"
           label="請輸入暱稱"
@@ -26,13 +34,14 @@ export default {
   },
   data () {
     return {
+      room: '',
       name: ''
     }
   },
   methods: {
     submit () {
       this.$router.push({
-          path: '/student?name=' + this.name
+          path: '/student?room=' + this.room + '&name=' + this.name
       })
     }
   }

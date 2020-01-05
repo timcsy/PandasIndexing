@@ -108,6 +108,10 @@
 			<v-col v-else-if="view === 'finish'">
 				<v-row justify="center">
 					<h1> 遊戲結束 </h1>
+					<v-spacer />
+					<v-btn @click="goHome()">
+						回首頁
+					</v-btn>
 				</v-row>
 				<v-row justify="center">
 					<h2> 總積分： {{ score }} </h2>
@@ -126,6 +130,18 @@
 				</div>
 			</v-col>
     </v-row>
+		<v-snackbar
+      v-model="snackbar"
+    >
+      {{ error }}
+      <v-btn
+        @click="snackbar = false; goHome();"
+        color="pink"
+        text
+      >
+        重新輸入
+      </v-btn>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -137,6 +153,7 @@ export default {
 	},
 	data () {
 		return {
+			room: undefined,
 			view: 'start',
 			name: '',
 			score: 0,
@@ -144,20 +161,32 @@ export default {
 			i: 0,
 			j: 0,
 			right: true,
-			wrong: [] // question string
+			wrong: [], // question string,
+			error: '',
+			snackbar: false
 		}
 	},
 	mounted () {
 		const name = this.$route.query.name
+		this.room = this.$route.query.room
+		document.cookie = 'room=' + this.room
 		this.ws = new WebSocket(config.websocketType + '://' + location.host + '/')
 		this.ws.onmessage = (e) => {
 			const message = e.data
 			const msg = JSON.parse(message)
 			// console.log(msg)
+			if ('error' in msg) {
+				this.view = ''
+				this.error = msg.error
+				this.snackbar = true
+			}
 			if (msg.cmd === 'ready') {
 				this.send(name)
 			} else if (msg.cmd === 'student:new') {
+				this.room = msg.room
+				document.cookie = 'room=' + this.room
 				this.id = msg.id
+				document.cookie = 'id=' + this.id
 				this.name = name
 			} else if (msg.cmd === 'student:question') {
 				this.question(msg)
@@ -194,6 +223,13 @@ export default {
 			this.score = msg.score
 			this.rank = msg.rank
 			this.wrong = msg.wrong
+			document.cookie = 'room= ; expires = Thu, 01 Jan 1970 00:00:00 GMT'
+			document.cookie = 'id= ; expires = Thu, 01 Jan 1970 00:00:00 GMT'
+		},
+		goHome () {
+			this.$router.push({
+          path: '/'
+      })
 		}
 	}
 }

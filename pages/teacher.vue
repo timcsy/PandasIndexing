@@ -6,6 +6,8 @@
 		>
 			<v-col v-if="view === 'start'">
 				<v-row class="mb-8 mx-1">
+					<h1> 遊戲編號： {{ room }} </h1>
+					<v-spacer />
 					<h1> 目前人數： {{ students.length }} 人 </h1>
 					<v-spacer />
 					<v-btn @click="setting()">
@@ -22,6 +24,12 @@
 					<v-spacer />
 					<v-btn @click="initial()" class="mx-1">
 						預設值
+					</v-btn>
+					<v-btn
+						@click="finish()"
+						class="mx-1"
+					>
+						結束
 					</v-btn>
 					<v-btn @click="start('example')" class="mx-1">
 						試玩
@@ -156,6 +164,12 @@
 					<v-spacer />
 					<h2> 已作答： {{ answers }} 人， </h2>
 					<h2> 剩 {{ time }} 秒 </h2>
+					<v-btn
+						@click="finish()"
+						class="mx-1"
+					>
+						結束遊戲
+					</v-btn>
 				</v-row>
 				<v-row justify="center" class="my-4">
 					<h2> {{ question.text }} </h2>
@@ -267,6 +281,7 @@ export default {
 	},
 	data () {
 		return {
+			room: '',
 			view: 'start',
 			stage: 'answer',
 			students: [],
@@ -345,6 +360,8 @@ export default {
 			this.ws.send(JSON.stringify(msg))
 		},
 		renew (msg) {
+			this.room = msg.room
+			document.cookie = 'room=' + this.room
 			this.$set(this, 'students', Object.values(msg.students))
 		},
 		setting () {
@@ -397,10 +414,10 @@ export default {
 		total (msg) {
 			this.view = 'finish'
 			this.$set(this, 'rank', msg.rank)
+			document.cookie = 'room= ; expires = Thu, 01 Jan 1970 00:00:00 GMT'
 		},
 		goHome () {
-			this.view = 'start'
-			this.send({ cmd: 'teacher:new' })
+			this.$router.go()
 		}
 	}
 }
