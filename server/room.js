@@ -27,22 +27,23 @@ class Room {
 		ctx.websocket.send(JSON.stringify({ cmd: 'ready' }))
 
 		ctx.websocket.on('message', (message) => {
+			let id
 			// do something with the message from client
 			const msg = JSON.parse(message)
-			consola.log(this.room, (this.id || 'teacher') + ': ' + message)
+			consola.log(this.room, (id || 'teacher') + ': ' + message)
 			if (msg.cmd === 'student:new') {
-				this.id = ctx.cookies.get('id')
-				if (!this.id) {
+				id = ctx.cookies.get('id')
+				if (!id) {
 					if (msg.name in this.names) {
 						ctx.websocket.send(JSON.stringify({ error: '名稱已被使用' }))
 					}
-					this.id = (++this.studentCount).toString()
-					this.scores[this.id] = 0
+					id = (++this.studentCount).toString()
+					this.scores[id] = 0
 				}
-				this.sockets[this.id] = ctx.websocket
-				this.names[this.id] = msg.name
+				this.sockets[id] = ctx.websocket
+				this.names[id] = msg.name
 				this.sendTeacher({ cmd: 'teacher:renew', room: this.room, students: this.names })
-				this.sendStudent(this.id, { cmd: 'student:new', room: this.room, id: this.id })
+				this.sendStudent(id, { cmd: 'student:new', room: this.room, id })
 			} else if (msg.cmd === 'teacher:new') {
 				this.teacherSocket = ctx.websocket
 				this.sendTeacher({ cmd: 'teacher:renew', room: this.room, students: this.names })
@@ -53,8 +54,8 @@ class Room {
 				this.isExample = false
 				this.askQuestion(msg)
 			} else if (msg.cmd === 'student:answer') {
-				this.realAnswer[this.id] = msg.ans
-				this.times[this.id] = this.time
+				this.realAnswer[id] = msg.ans
+				this.times[id] = this.time
 				this.answers++
 				this.sendTeacher({ cmd: 'teacher:update', answers: this.answers, time: this.time })
 				if (this.answers === Object.keys(this.names).length) { this.result() }
