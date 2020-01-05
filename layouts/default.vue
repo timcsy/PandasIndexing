@@ -21,6 +21,15 @@
             <v-list-item-title v-text="item.title" />
           </v-list-item-content>
         </v-list-item>
+
+        <v-list-item @click="refresh()">
+          <v-list-item-action>
+            <v-icon>mdi-refresh</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title v-text="'重新整理'" />
+          </v-list-item-content>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-app-bar
@@ -61,6 +70,12 @@ export default {
 			],
 			title: 'Matrix'
 		}
-	}
+  },
+  methods: {
+    refresh () {
+      document.cookie = 'room= ; expires = Thu, 01 Jan 1970 00:00:00 GMT'
+			document.cookie = 'id= ; expires = Thu, 01 Jan 1970 00:00:00 GMT'
+    }
+  }
 }
 </script>

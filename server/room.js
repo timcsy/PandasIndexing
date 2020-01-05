@@ -78,12 +78,14 @@ class Room {
 
 	sendTeacher (msg) {
 		if (this.teacherSocket && this.teacherSocket.readyState === 1) {
+			consola.log('to teacher :', msg)
 			this.teacherSocket.send(JSON.stringify(msg))
 		}
 	}
 
 	sendStudent (id, msg) {
 		if (this.sockets[id] && this.sockets[id].readyState === 1) {
+			consola.log('to', id, ':', msg)
 			this.sockets[id].send(JSON.stringify(msg))
 		}
 	}

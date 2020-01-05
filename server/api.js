@@ -13,6 +13,8 @@ router.all('/', async (ctx) => {
 	let room = ctx.cookies.get('room')
 	if (!room) {
 		room = (++roomCount).toString()
+	} else if (roomCount < parseInt(room)) {
+		roomCount = parseInt(room)
 	}
 	if (room in rooms) {
 		rooms[room].add(ctx)
