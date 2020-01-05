@@ -24,10 +24,10 @@ class Room {
 	}
 
 	add (ctx) {
+		let id
 		ctx.websocket.send(JSON.stringify({ cmd: 'ready' }))
 
 		ctx.websocket.on('message', (message) => {
-			let id
 			// do something with the message from client
 			const msg = JSON.parse(message)
 			consola.log(this.room, (id || 'teacher') + ': ' + message)

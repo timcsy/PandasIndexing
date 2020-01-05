@@ -27,7 +27,7 @@
             <v-icon>mdi-refresh</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title v-text="'重新整理'" />
+            <v-list-item-title v-text="'清除資訊'" />
           </v-list-item-content>
         </v-list-item>
       </v-list>

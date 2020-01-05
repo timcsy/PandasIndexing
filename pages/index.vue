@@ -8,7 +8,7 @@
         <v-text-field
           v-model="room"
           label="請輸入遊戲編號"
-          placeholder="（例：123，請看老師的頁面）"
+          placeholder="遊戲編號（例：123，請看老師的頁面）"
           outlined
           solo
           counter="8"
@@ -16,7 +16,7 @@
         <v-text-field
           v-model="name"
           label="請輸入暱稱"
-          placeholder="（例：谷關空氣）"
+          placeholder="暱稱（例：谷關空氣）"
           outlined
           solo
           counter="8"
